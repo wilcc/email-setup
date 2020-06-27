@@ -7,8 +7,14 @@ require('dotenv').config()
 
 const mailjet = require ('node-mailjet')
 .connect(process.env.MJ_APIKEY_PUBLIC, process.env.MJ_APIKEY_PRIVATE)
-const {check,validationResult} = require('express-validator')
 
+router.use((req,res,next)=>{
+    res.locals.user = req.user
+    res.locals.errors =req.flash('errors')
+    res.locals.success = req.flash('success')
+    next()
+  })
+  
 const auth = ((req,res,next)=>{
     if(req.isAuthenticated()){
         next()
@@ -16,19 +22,7 @@ const auth = ((req,res,next)=>{
     res.redirect('/notallowed')
   })
 
-  const loginCheck = [
-    check('email').isEmail(),
-    check('password').isLength({min:3})
-  ]
-  
-  const loginValidate = (req,res,next)=>{
-    const info = validationResult(req)
-    if(!info.isEmpty()){
-        req.flash('errors', 'Invalid Email or Password')
-        return res.redirect('/login')
-    }
-    next()
-  }
+
 
 router.get('/login',(req,res)=>{
     res.render('login')
@@ -43,7 +37,7 @@ router.get('/thankyou',(req,res)=>{
     res.render('thankyou')
   })
 
-router.post('/login',loginCheck,loginValidate,passport.authenticate('local-login', {
+router.post('/login',passport.authenticate('local-login', {
     successRedirect: '/logged',
     failureRedirect:'/login',
     failureFlash: true
