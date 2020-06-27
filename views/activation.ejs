@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title></title>
+        <title>Account Activation</title>
 
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
 <link rel="stylesheet" href="/./stylesheets/loginStyle.css">
@@ -15,24 +15,18 @@
     <div id="fullscreen_bg" class="fullscreen_bg"/>
     
     <div class="container">
-    
-        <form class="form-signin" action="login" method="POST">
-            <h1 class="form-signin-heading text-muted">Sign In</h1>
-            
+
+        <form class="form-signin" action="activation" method="POST">
+            <h1 class="form-signin-heading text-muted">Activation</h1>
             <input type="text" id="username" class="form-control" placeholder="Username" name = "username" required="" autofocus="">
             <input type="password" id="password" class="form-control" placeholder="Password" name = "password" required="">
+            <input type="password" id="newPassword" class="form-control" placeholder="New Password" name = "newPassword" required="">
             <button class="btn btn-lg btn-primary btn-block" type="submit">
-                Sign In
+                Activate
             </button>
 
         </form>
-        <div class="register">
-        <a href="signup">
-        <button class="btn btn-lg btn-primary btn-block register" type="submit">
-            Register New User
-        </button>
-        </a>
-        </div>
+
     </div>
 
 

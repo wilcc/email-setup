@@ -7,9 +7,28 @@ require('dotenv').config()
 
 const mailjet = require ('node-mailjet')
 .connect(process.env.MJ_APIKEY_PUBLIC, process.env.MJ_APIKEY_PRIVATE)
-// const {check,validationResult} = require('express-validator')
+const {check,validationResult} = require('express-validator')
 
+const auth = ((req,res,next)=>{
+    if(req.isAuthenticated()){
+        next()
+    }else
+    res.redirect('/notallowed')
+  })
 
+  const loginCheck = [
+    check('email').isEmail(),
+    check('password').isLength({min:3})
+  ]
+  
+  const loginValidate = (req,res,next)=>{
+    const info = validationResult(req)
+    if(!info.isEmpty()){
+        req.flash('errors', 'Invalid Email or Password')
+        return res.redirect('/login')
+    }
+    next()
+  }
 
 router.get('/login',(req,res)=>{
     res.render('login')
@@ -17,18 +36,88 @@ router.get('/login',(req,res)=>{
 router.get('/signup',(req,res)=>{
     res.render('signup')
 })
-router.get('/logged',(req,res)=>{
+router.get('/logged',auth,(req,res)=>{
     res.render('logged')
 })
 router.get('/thankyou',(req,res)=>{
     res.render('thankyou')
   })
-router.post('/login',passport.authenticate('local-login', {
+
+router.post('/login',loginCheck,loginValidate,passport.authenticate('local-login', {
     successRedirect: '/logged',
     failureRedirect:'/login',
     failureFlash: true
   })
 )
+router.get('/activation/:username',(req,res)=>{
+    User.findOne({username:req.params.username}).then((user)=>{
+        if(!user){
+            res.status(400).json({message:'User not found'})
+        }if(user.defaultPassword === false){
+            res.render('notAllowed')
+        }
+        else{
+        res.render('activationbyuser',{user:user})
+        }
+})
+})
+// router.get('/activation',(req,res)=>{
+  
+//         res.render('activation')
+
+// })
+router.post('/activation/:username',(req,res)=>{
+    User.findOne({username:req.params.username}).then((user)=>{
+        if(!user){
+            res.status(400).json({message:'User not found'})
+        }if(user.defaultPassword === false){
+            res.status(400).json({message:'Page Not Found'})
+        }
+        else{
+            const inputPassword = req.body.password
+            const newPassword = req.body.newPassword
+            console.log(newPassword)
+            if(inputPassword !== user.password){
+                res.status(400).json({message:'Wrong password'})
+            }else{
+                const salt = bcrypt.genSaltSync(10)
+                const hash = bcrypt.hashSync(newPassword,salt)
+                user.password = hash
+                console.log(user.password)
+                user.defaultPassword = false
+                console.log(user.defaultPassword)
+                user.save()
+                res.redirect('/logged')
+            }
+        }
+    })
+})
+// router.post('/activation',(req,res)=>{
+//     User.findOne({username:req.body.username}).then((user)=>{
+//         if(!user){
+//             res.status(400).json({message:'User not found'})
+//         }if(user.defaultPassword === false){
+//             res.status(400).json({message:'Page Not Found'})
+//         }
+//         else{
+//             const inputPassword = req.body.password
+//             const newPassword = req.body.newPassword
+//             console.log(newPassword)
+//             if(inputPassword !== user.password){
+//                 res.status(400).json({message:'Wrong password'})
+//             }else{
+//                 const salt = bcrypt.genSaltSync(10)
+//                 const hash = bcrypt.hashSync(newPassword,salt)
+//                 user.password = hash
+//                 console.log(user.password)
+//                 user.defaultPassword = false
+//                 console.log(user.defaultPassword)
+//                 user.save()
+//                 res.redirect('/thankyou')
+//             }
+//         }
+//     })
+// })
 router.post('/signup',(req,res)=>{
     User.findOne({username:req.body.username}).then((user)=>{
         if(user){
@@ -37,8 +126,8 @@ router.post('/signup',(req,res)=>{
             // return res.redirect(301, '/users/signup')
         }else{
         const newUser = new User()
-        const salt = bcrypt.genSaltSync(10)
-        const hash = bcrypt.hashSync(req.body.password,salt)
+        // const salt = bcrypt.genSaltSync(10)
+        // const hash = bcrypt.hashSync(req.body.password,salt)
         newUser.username = req.body.username
         newUser.name = req.body.name
         newUser.email = req.body.email
@@ -62,7 +151,7 @@ router.post('/signup',(req,res)=>{
                         ],
                         "Subject": "Greetings from Mailjet.",
                         "TextPart": "My first Mailjet email",
-                        "HTMLPart": "<h3>Dear passenger 1, welcome to <a href='https://www.mailjet.com/'>Mailjet</a>!</h3><br />May the delivery force be with you!",
+                        "HTMLPart": `<h3>Dear ${user.username}, welcome to WilApp!</h3><br />Please visit the following link to activate your account! Your temporary password is ${user.password}<br /><br /><br /> http://localhost:3000/activation`,
                         "CustomID": "AppGettingStartedTest"
                     }
                         ]
@@ -73,7 +162,7 @@ router.post('/signup',(req,res)=>{
                     }).catch((err) => {
                     console.log(err.statusCode)
                         })
-                        res.redirect('/users/thankyou')
+                        res.redirect('/thankyou')
 
                         }).catch((err)=>console.log('error'))
                         }
