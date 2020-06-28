@@ -17,7 +17,7 @@ module.exports={
             if(user){
                 // res.status(400).json({message:'User Exists'})
                 req.flash('errors', 'Account Exists')
-                return res.redirect(301, '/users/signup')
+                return res.redirect(301, '/signup')
             }else{
             const newUser = new User()
             newUser.username = req.body.username
@@ -56,7 +56,7 @@ module.exports={
                             })
                             res.redirect('/thankyou')
     
-                            }).catch((err)=>console.log('error'))
+                            }).catch((err)=>console.log('error over here'))
                             }
                             })
     
