@@ -15,7 +15,6 @@ module.exports={
     signUp: (req,res)=>{
         User.findOne({username:req.body.username}).then((user)=>{
             if(user){
-                // res.status(400).json({message:'User Exists'})
                 req.flash('errors', 'Account Exists')
                 return res.redirect(301, '/signup')
             }else{
@@ -73,7 +72,8 @@ module.exports={
                 const newPassword = req.body.newPassword
                 console.log(newPassword)
                 if(inputPassword !== user.password){
-                    res.status(400).json({message:'Wrong password'})
+                    req.flash('errors', 'Please check your password')
+                    return res.redirect(301, `/activation/${user.username}`)
                 }else{
                     const salt = bcrypt.genSaltSync(10)
                     const hash = bcrypt.hashSync(newPassword,salt)
